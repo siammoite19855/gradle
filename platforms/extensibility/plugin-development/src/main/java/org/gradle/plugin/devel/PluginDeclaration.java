@@ -16,10 +16,16 @@
 
 package org.gradle.plugin.devel;
 
+import org.gradle.api.Action;
 import org.gradle.api.Named;
+import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.internal.instrumentation.api.annotations.NotToBeReplacedByLazyProperty;
 import org.gradle.internal.instrumentation.api.annotations.ToBeReplacedByLazyProperty;
+
+import javax.inject.Inject;
 
 /**
  * Describes a Gradle plugin under development.
@@ -33,9 +39,14 @@ public abstract class PluginDeclaration implements Named {
     private String implementationClass;
     private String displayName;
     private String description;
+    private final SupportedFeatures supportedFeatures;
+
+    @Inject
+    protected abstract ObjectFactory getObjects();
 
     public PluginDeclaration(String name) {
         this.name = name;
+        this.supportedFeatures = getObjects().newInstance(SupportedFeatures.class);
     }
 
     @Override
@@ -122,4 +133,11 @@ public abstract class PluginDeclaration implements Named {
      */
     public abstract SetProperty<String> getTags();
 
+    public SupportedFeatures getSupportedFeatures() {
+        return this.supportedFeatures;
+    }
+
+    public void supportedFeatures(Action<? super SupportedFeatures> action) {
+        action.execute(this.supportedFeatures);
+    }
 }
