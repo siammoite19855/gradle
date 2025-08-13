@@ -108,6 +108,17 @@ abstract class MavenPluginPublishPlugin implements Plugin<Project> {
                 artifactId.setTextContent(artifactIdProvider.get());
                 Node version = dependency.appendChild(document.createElement("version"));
                 version.setTextContent(versionProvider.get());
+
+                // Add supported feature properties
+                Node properties = root.appendChild(document.createElement("properties"));
+                Node configurationCacheSupportProperty = properties.appendChild(document.createElement("org.gradle.plugin.features.configuration-cache"));
+                configurationCacheSupportProperty.setTextContent(
+                    declaration.getSupportedFeatures().getConfigurationCache().map(Object::toString).getOrElse("false")
+                );
+                Node isolatedProjectsSupportProperty = properties.appendChild(document.createElement("org.gradle.plugin.features.isolated-projects"));
+                isolatedProjectsSupportProperty.setTextContent(
+                    declaration.getSupportedFeatures().getIsolatedProjects().map(Object::toString).getOrElse("false")
+                );
             }
         });
 

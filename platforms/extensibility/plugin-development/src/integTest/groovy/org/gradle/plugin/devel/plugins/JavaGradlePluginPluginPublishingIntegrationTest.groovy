@@ -16,7 +16,9 @@
 
 package org.gradle.plugin.devel.plugins
 
+import org.gradle.api.provider.Property
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
+import org.gradle.plugin.devel.SupportedFeatures
 import spock.lang.Issue
 
 import static org.gradle.plugin.use.resolve.internal.ArtifactRepositoriesPluginResolver.PLUGIN_MARKER_SUFFIX
@@ -322,6 +324,37 @@ class JavaGradlePluginPluginPublishingIntegrationTest extends AbstractIntegratio
         module.parsedPom.description == 'publishingDesc'
     }
 
+    def "can define feature flags on plugins"() {
+        given:
+        plugin('foo', 'com.example.foo')
+        publishToMaven()
+
+        and:
+        buildFile << """
+            publishing {
+                publications.withType(MavenPublication) {
+                    pom {
+                        name = "publishingName"
+                        description = "publishingDesc"
+                    }
+                }
+            }
+        """.stripIndent()
+
+        when:
+        succeeds 'publish'
+
+        then:
+        mavenRepo.module('com.example', 'plugins', '1.0').assertPublished()
+
+        def module = mavenRepo.module('com.example.foo', 'com.example.foo' + PLUGIN_MARKER_SUFFIX, '1.0')
+        module.assertPublished()
+
+        def properties = module.parsedPom.properties
+        properties['org.gradle.plugin.features.configuration-cache'] == 'true'
+        properties['org.gradle.plugin.features.isolated-projects'] == 'false'
+    }
+
     def publishToMaven() {
         buildFile << """
             apply plugin: 'maven-publish'
@@ -367,9 +400,19 @@ public class ${implementationClass} implements Plugin<Project> {
                         implementationClass = '${implementationClass}'
                         ${displayName ? "displayName = '$displayName'" : ""}
                         ${description ? "description = '$description'" : ""}
+                        supportedFeatures {
+                            configurationCache = true
+                            isolatedProjects = false
+                        }
                     }
                 }
             }
         """
     }
+
+    class TestedSupportedFeatures {
+        boolean configurationCache = false
+        boolean isolatedProjects = false
+    }
+
 }
