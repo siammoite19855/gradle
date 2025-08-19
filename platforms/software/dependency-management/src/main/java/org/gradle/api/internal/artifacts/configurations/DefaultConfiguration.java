@@ -671,7 +671,7 @@ public abstract class DefaultConfiguration extends AbstractFileCollection implem
                 String projectPathString = null;
                 if (!domainObjectContext.isScript()) {
                     if (projectId != null) {
-                        projectPathString = projectId.getProjectPath().getPath();
+                        projectPathString = projectId.getProjectPath().asString();
                     }
                 }
                 return BuildOperationDescriptor.displayName(displayName)
@@ -680,7 +680,7 @@ public abstract class DefaultConfiguration extends AbstractFileCollection implem
                         getName(),
                         domainObjectContext.isScript(),
                         getDescription(),
-                        domainObjectContext.getBuildPath().getPath(),
+                        domainObjectContext.getBuildPath().asString(),
                         projectPathString,
                         visible,
                         isTransitive(),
@@ -1236,7 +1236,7 @@ public abstract class DefaultConfiguration extends AbstractFileCollection implem
     public ConfigurationIdentity getConfigurationIdentity() {
         String name = getName();
         ProjectIdentity projectId = domainObjectContext.getProjectIdentity();
-        String projectPath = projectId == null ? null : projectId.getProjectPath().getPath();
+        String projectPath = projectId == null ? null : projectId.getProjectPath().asString();
         String buildPath = domainObjectContext.getBuildPath().toString();
         return new DefaultConfigurationIdentity(buildPath, projectPath, name);
     }
@@ -1630,7 +1630,7 @@ public abstract class DefaultConfiguration extends AbstractFileCollection implem
 
         @Override
         public String getPath() {
-            return configuration.projectPath.getPath();
+            return configuration.projectPath.asString();
         }
 
         @Override

@@ -81,7 +81,7 @@ public class DefaultProjectRegistry<T extends ProjectIdentifier> implements Proj
 
     @Override
     public T getRootProject() {
-        return getProject(Path.ROOT.getPath());
+        return getProject(Path.ROOT.asString());
     }
 
     @Override
