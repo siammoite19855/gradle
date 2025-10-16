@@ -15,6 +15,7 @@
  */
 package org.gradle.internal.service;
 
+import com.google.common.base.Preconditions;
 import org.gradle.internal.concurrent.CompositeStoppable;
 import org.gradle.internal.concurrent.Stoppable;
 import org.jspecify.annotations.Nullable;
@@ -94,9 +95,8 @@ public class DefaultServiceRegistry implements CloseableServiceRegistry, Contain
     private final ClassInspector inspector;
     private final OwnServices ownServices;
     private final ServiceProvider allServices;
-    private final ServiceProvider parentServices;
-    @Nullable
-    private final String displayName;
+    private final @Nullable ServiceProvider parentServices;
+    private final @Nullable String displayName;
     private final ServiceProvider thisAsServiceProvider;
 
     private final AtomicReference<State> state = new AtomicReference<State>(State.INIT);
@@ -347,7 +347,7 @@ public class DefaultServiceRegistry implements CloseableServiceRegistry, Contain
     }
 
     @Override
-    public Object find(Type serviceType) throws ServiceLookupException {
+    public @Nullable Object find(Type serviceType) throws ServiceLookupException {
         assertValidServiceType(unwrap(serviceType));
         Service provider = getService(serviceType);
         return provider == null ? null : provider.get();
@@ -412,7 +412,7 @@ public class DefaultServiceRegistry implements CloseableServiceRegistry, Contain
         }
 
         @Override
-        public Service getService(Type type, @Nullable ServiceAccessToken token) {
+        public @Nullable Service getService(Type type, @Nullable ServiceAccessToken token) {
             List<ServiceProvider> serviceProviders = getProviders(unwrap(type));
             if (serviceProviders.isEmpty()) {
                 return null;
@@ -601,7 +601,7 @@ public class DefaultServiceRegistry implements CloseableServiceRegistry, Contain
     private static abstract class ManagedObjectServiceProvider implements ServiceProvider, Service {
         protected final DefaultServiceRegistry owner;
         private final Queue<ServiceProvider> dependents = new ConcurrentLinkedQueue<ServiceProvider>();
-        private volatile Object instance;
+        private volatile @Nullable Object instance;
 
         protected ManagedObjectServiceProvider(DefaultServiceRegistry owner) {
             this.owner = owner;
@@ -620,8 +620,7 @@ public class DefaultServiceRegistry implements CloseableServiceRegistry, Contain
                 synchronized (this) {
                     result = instance;
                     if (result == null) {
-                        setInstance(createServiceInstance());
-                        result = instance;
+                        setInstance(result = createServiceInstance());
                     }
                 }
             }
@@ -647,8 +646,9 @@ public class DefaultServiceRegistry implements CloseableServiceRegistry, Contain
         @Override
         public final synchronized void stop() {
             try {
-                if (instance != null) {
-                    CompositeStoppable.stoppable(dependents).add(instance).stop();
+                Object theInstance = this.instance;
+                if (theInstance != null) {
+                    CompositeStoppable.stoppable(dependents).add(theInstance).stop();
                 }
             } finally {
                 dependents.clear();
@@ -732,7 +732,7 @@ public class DefaultServiceRegistry implements CloseableServiceRegistry, Contain
         }
 
         @Override
-        public Service getService(Type serviceType, @Nullable ServiceAccessToken token) {
+        public @Nullable Service getService(Type serviceType, @Nullable ServiceAccessToken token) {
             if (!accessScope.contains(token)) {
                 return null;
             }
@@ -756,8 +756,8 @@ public class DefaultServiceRegistry implements CloseableServiceRegistry, Contain
 
     private static abstract class FactoryService extends SingletonService {
         private final ServiceAccessToken accessToken;
-        private Service[] paramServices;
-        private Service decorates;
+        private Service @Nullable [] paramServices;
+        private @Nullable Service decorates;
 
         protected FactoryService(DefaultServiceRegistry owner, ServiceAccessScope accessScope, ServiceAccessToken accessToken, List<? extends Type> serviceTypes) {
             super(owner, accessScope, serviceTypes);
@@ -779,8 +779,17 @@ public class DefaultServiceRegistry implements CloseableServiceRegistry, Contain
             for (int i = 0; i < parameterTypes.length; i++) {
                 Type paramType = parameterTypes[i];
                 if (isEqualToAnyType(paramType, serviceTypes)) {
+                    ServiceProvider parentServices = owner.parentServices;
+                    if (parentServices == null) {
+                        throw new ServiceCreationException(String.format(
+                            "Cannot create service of %s using %s as not parent registry is available to look up required service of type %s for parameter #%s.",
+                            format("type", serviceTypes),
+                            getFactoryDisplayName(),
+                            format(paramType),
+                            i + 1));
+                    }
                     // A decorating factory
-                    Service paramProvider = find(paramType, accessToken, owner.parentServices);
+                    Service paramProvider = find(paramType, accessToken, parentServices);
                     if (paramProvider == null) {
                         throw new ServiceCreationException(String.format("Cannot create service of %s using %s as required service of type %s for parameter #%s is not available in parent registries.",
                             format("type", serviceTypes),
@@ -825,6 +834,8 @@ public class DefaultServiceRegistry implements CloseableServiceRegistry, Contain
         }
 
         private Object[] assembleParameters() {
+            Preconditions.checkState(paramServices != null, "Factory %s is not bound or the instance has been created already", getFactoryDisplayName());
+
             if (paramServices == NO_DEPENDENTS) {
                 return NO_PARAMS;
             }
@@ -1023,7 +1034,8 @@ public class DefaultServiceRegistry implements CloseableServiceRegistry, Contain
             try {
                 return getConstructor().newInstance(params);
             } catch (InvocationTargetException e) {
-                throw new ServiceCreationException(String.format("Could not create service of %s.", format("type", serviceTypes)), e.getCause());
+                Throwable cause = e.getCause();
+                throw new ServiceCreationException(String.format("Could not create service of %s.", format("type", serviceTypes)), cause != null ? cause : e);
             } catch (Exception e) {
                 throw new ServiceCreationException(String.format("Could not create service of %s.", format("type", serviceTypes)), e);
             }
@@ -1057,7 +1069,7 @@ public class DefaultServiceRegistry implements CloseableServiceRegistry, Contain
         }
 
         @Override
-        public Service getService(Type serviceType, @Nullable ServiceAccessToken token) {
+        public @Nullable Service getService(Type serviceType, @Nullable ServiceAccessToken token) {
             for (ServiceProvider serviceProvider : serviceProviders) {
                 Service service = serviceProvider.getService(serviceType, token);
                 if (service != null) {
@@ -1101,7 +1113,7 @@ public class DefaultServiceRegistry implements CloseableServiceRegistry, Contain
         }
 
         @Override
-        public Service getService(Type serviceType, @Nullable ServiceAccessToken token) {
+        public @Nullable Service getService(Type serviceType, @Nullable ServiceAccessToken token) {
             return parent.getService(serviceType, token);
         }
 
@@ -1310,7 +1322,7 @@ public class DefaultServiceRegistry implements CloseableServiceRegistry, Contain
         }
 
         @Override
-        public Service getService(Type serviceType, @Nullable ServiceAccessToken token) {
+        public @Nullable Service getService(Type serviceType, @Nullable ServiceAccessToken token) {
             if (!accessScope.contains(token)) {
                 return null;
             }
