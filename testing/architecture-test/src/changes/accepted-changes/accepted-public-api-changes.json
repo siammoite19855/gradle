@@ -1,9 +1,17 @@
 {
     "acceptedApiChanges": [
         {
+            "type": "org.gradle.api.initialization.dsl.ScriptHandler",
+            "member": "Method org.gradle.api.initialization.dsl.ScriptHandler.dependencyLocking(org.gradle.api.Action)",
+            "acceptation": "faulty @since detection",
+            "changes": [
+                "Method added to interface"
+            ]
+        },
+        {
             "type": "org.gradle.kotlin.dsl.GradleApiKotlinDslExtensions_8xle22tzu43ezso8mcqsuzcfqKt",
             "member": "Method org.gradle.kotlin.dsl.GradleApiKotlinDslExtensions_8xle22tzu43ezso8mcqsuzcfqKt.fetch(org.gradle.tooling.BuildController,org.gradle.tooling.model.Model,kotlin.reflect.KClass)",
-            "acceptation": "We don\u0027t generate @since on the generated accessor method",
+            "acceptation": "We don't generate @since on the generated accessor method",
             "changes": [
                 "Method added to public class"
             ]
@@ -11,7 +19,31 @@
         {
             "type": "org.gradle.kotlin.dsl.GradleApiKotlinDslExtensions_8xle22tzu43ezso8mcqsuzcfqKt",
             "member": "Method org.gradle.kotlin.dsl.GradleApiKotlinDslExtensions_8xle22tzu43ezso8mcqsuzcfqKt.fetch(org.gradle.tooling.BuildController,org.gradle.tooling.model.Model,kotlin.reflect.KClass,kotlin.reflect.KClass,org.gradle.api.Action)",
-            "acceptation": "We don\u0027t generate @since on the generated accessor method",
+            "acceptation": "We don't generate @since on the generated accessor method",
+            "changes": [
+                "Method added to public class"
+            ]
+        },
+        {
+            "type": "org.gradle.kotlin.dsl.ScriptHandlerScope",
+            "member": "Method org.gradle.kotlin.dsl.ScriptHandlerScope.dependencies(org.gradle.api.Action)",
+            "acceptation": "faulty @since detection",
+            "changes": [
+                "Method added to public class"
+            ]
+        },
+        {
+            "type": "org.gradle.kotlin.dsl.ScriptHandlerScope",
+            "member": "Method org.gradle.kotlin.dsl.ScriptHandlerScope.dependencyLocking(org.gradle.api.Action)",
+            "acceptation": "faulty @since detection",
+            "changes": [
+                "Method added to public class"
+            ]
+        },
+        {
+            "type": "org.gradle.kotlin.dsl.ScriptHandlerScope",
+            "member": "Method org.gradle.kotlin.dsl.ScriptHandlerScope.repositories(org.gradle.api.Action)",
+            "acceptation": "faulty @since detection",
             "changes": [
                 "Method added to public class"
             ]

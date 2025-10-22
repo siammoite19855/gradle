@@ -17,6 +17,7 @@ package org.gradle.api.internal.initialization
 
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
+import org.gradle.api.initialization.dsl.ScriptHandler
 import org.gradle.api.internal.CollectionCallbackActionDecorator
 import org.gradle.api.internal.artifacts.DependencyResolutionServices
 import org.gradle.api.internal.artifacts.configurations.RoleBasedConfigurationContainerInternal
@@ -40,7 +41,7 @@ class DefaultScriptHandlerTest extends Specification {
     def configurationContainer = Mock(RoleBasedConfigurationContainerInternal)
     def configuration = Mock(ResettableConfiguration)
     def scriptSource = Stub(ScriptSource)
-    def objectFactory = TestUtil.objectFactory()
+
     def depMgmtServices = Mock(DependencyResolutionServices) {
         getAttributesSchema() >> Stub(AttributesSchemaInternal)
         getObjectFactory() >> objectFactory
@@ -52,7 +53,7 @@ class DefaultScriptHandlerTest extends Specification {
         getLocalClassLoader() >> baseClassLoader
     }
     def buildLogicBuilder = Mock(BuildLogicBuilder)
-    def handler = new DefaultScriptHandler(scriptSource, depMgmtServices, classLoaderScope, buildLogicBuilder)
+    ScriptHandler handler = new DefaultScriptHandler(scriptSource, depMgmtServices, classLoaderScope, buildLogicBuilder)
 
     def "adds classpath configuration when configuration container is queried"() {
         when:
