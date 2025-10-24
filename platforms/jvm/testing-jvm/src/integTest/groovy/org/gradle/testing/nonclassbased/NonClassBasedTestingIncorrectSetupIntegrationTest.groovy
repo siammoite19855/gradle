@@ -20,8 +20,10 @@ import org.gradle.internal.os.OperatingSystem
 import org.gradle.test.precondition.Requires
 import org.gradle.test.preconditions.UnitTestPreconditions
 import org.gradle.testing.fixture.TestNGCoverage
-import testengines.TestEngines
 
+/**
+ * Tests that exercise and demonstrate incorrect Non-Class-Based Testing setups.
+ */
 class NonClassBasedTestingIncorrectSetupIntegrationTest extends AbstractNonClassBasedTestingIntegrationTest {
     @Override
     List<TestEngines> getEnginesToSetup() {

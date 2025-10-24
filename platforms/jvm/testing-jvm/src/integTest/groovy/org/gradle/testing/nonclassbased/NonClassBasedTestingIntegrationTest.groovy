@@ -16,8 +16,6 @@
 
 package org.gradle.testing.nonclassbased
 
-import testengines.TestEngines
-
 /**
  * Tests that exercise and demonstrate Non-Class-Based Testing using the {@code Test} task
  * and a sample resource-based JUnit Platform Test Engine defined in this project's {@code testFixtures}.

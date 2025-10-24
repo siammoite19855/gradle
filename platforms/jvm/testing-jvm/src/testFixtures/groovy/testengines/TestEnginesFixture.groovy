@@ -69,4 +69,20 @@ trait TestEnginesFixture {
                 }
         """
     }
+
+    enum TestEngines {
+        BASIC_RESOURCE_BASED("rbt-engine")
+
+        public static final String ENGINE_COPY_TO_DIR_NAME = "test-engine-build"
+
+        private final String name
+
+        TestEngines(final String name) {
+            this.name = name
+        }
+
+        String getName() {
+            return name
+        }
+    }
 }
