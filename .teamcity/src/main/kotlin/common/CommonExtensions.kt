@@ -142,8 +142,8 @@ fun BuildType.applyDefaultSettings(
         build/report-* => $HIDDEN_ARTIFACT_DESTINATION
         build/tmp/teŝt files/** => $HIDDEN_ARTIFACT_DESTINATION/teŝt-files
         build/errorLogs/** => $HIDDEN_ARTIFACT_DESTINATION/errorLogs
-        build/artifact-cache-metrics => artifact-cache-metrics
-        build/artifact-cache-report => artifact-cache-report
+        artifact-cache-metrics => artifact-cache-metrics
+        artifact-cache-report => artifact-cache-report
         build/reports/configuration-cache/**/configuration-cache-report.html
         subprojects/internal-build-reports/build/reports/incubation/all-incubating.html => incubation-reports
         testing/architecture-test/build/reports/binary-compatibility/report.html => binary-compatibility-reports
