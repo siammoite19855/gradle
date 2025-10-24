@@ -17,6 +17,8 @@
 package org.gradle.testing.testengine.engine;
 
 import org.gradle.testing.testengine.descriptor.ResourceBasedTestDescriptor;
+import org.gradle.testing.testengine.descriptor.ClassBasedTestDescriptor;
+import org.junit.platform.commons.JUnitException;
 import org.junit.platform.commons.logging.Logger;
 import org.junit.platform.commons.logging.LoggerFactory;
 import org.junit.platform.engine.DiscoverySelector;
@@ -29,14 +31,22 @@ import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.engine.support.discovery.EngineDiscoveryRequestResolver;
+import org.junit.platform.engine.support.hierarchical.EngineExecutionContext;
+import org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine;
+import org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutorService;
+import org.junit.platform.engine.support.hierarchical.Node;
+import org.junit.platform.engine.support.hierarchical.ResourceLock;
+import org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService;
+import org.junit.platform.engine.support.hierarchical.ThrowableCollector;
 
+import java.io.File;
 import java.util.stream.Collectors;
 
-public class ResourceBasedTestEngine implements TestEngine {
-    public static final Logger LOGGER = LoggerFactory.getLogger(ResourceBasedTestEngine.class);
+public class ClassAndResourceBasedTestEngine implements TestEngine {
+    public static final Logger LOGGER = LoggerFactory.getLogger(ClassAndResourceBasedTestEngine.class);
 
-    public static final String ENGINE_ID = "rbt-engine";
-    public static final String ENGINE_NAME = "Resource Based Test Engine";
+    public static final String ENGINE_ID = "class-and-resource-engine";
+    public static final String ENGINE_NAME = "Class and Resource Based Test Engine";
 
     @Override
     public String getId() {
@@ -48,7 +58,7 @@ public class ResourceBasedTestEngine implements TestEngine {
         LOGGER.info(() -> {
             String selectorsMsg = discoveryRequest.getSelectorsByType(DiscoverySelector.class).stream()
                 .map(Object::toString)
-                .collect(Collectors.joining("\t\n", "\t", ""));
+                .collect(Collectors.joining("\n\t", "\t", ""));
             return "Discovering tests with engine: " + uniqueId + " using selectors:\n" + selectorsMsg;
         });
 
@@ -56,6 +66,7 @@ public class ResourceBasedTestEngine implements TestEngine {
 
         EngineDiscoveryRequestResolver.builder()
             .addSelectorResolver(new ResourceBasedSelectorResolver())
+            .addSelectorResolver(new ClassBasedSelectorResolver())
             .build()
             .resolve(discoveryRequest, engineDescriptor);
 
@@ -71,6 +82,10 @@ public class ResourceBasedTestEngine implements TestEngine {
             if (test instanceof ResourceBasedTestDescriptor) {
                 listener.executionStarted(test);
                 LOGGER.info(() -> "Executing resource-based test: " + test);
+                listener.executionFinished(test, TestExecutionResult.successful());
+            } else if (test instanceof ClassBasedTestDescriptor) {
+                listener.executionStarted(test);
+                LOGGER.info(() -> "Executing class-based test: " + test);
                 listener.executionFinished(test, TestExecutionResult.successful());
             } else {
                 throw new IllegalStateException("Cannot execute test: " + test + " of type: " + test.getClass().getName());

@@ -29,8 +29,19 @@ import org.gradle.integtests.fixtures.executer.UnderDevelopmentGradleDistributio
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
 import org.gradle.util.internal.TextUtil
 
+/**
+ * Trait to provide custom JUnit Test Engines to integration tests.
+ * <p>
+ * Note that this trait can <strong>NOT BE SHARED</strong> by multiple test classes in the same project
+ * that share a class name prefix (e.g. MyClassRedTest and MyClassBlueTest) because of the way our testing
+ * infrastructure sets up test directories.  Both of these test classes would use the same engine copy-to
+ * dir, and thus interfere with each other.
+ */
 @SelfType(AbstractIntegrationSpec)
 trait TestEnginesFixture {
+    private static final String ENGINE_COPY_TO_DIR_NAME = "test-engine-build"
+
+    private static File engineBuildDir
     private static String engineJarLibPath
 
     abstract List<TestEngines> getEnginesToSetup()
@@ -41,14 +52,15 @@ trait TestEnginesFixture {
 
         // Copy required test engine source to the root of the test directory structure for this test class
         TestResources resources = new TestResources(customTestDirectoryProvider, TestEngines.class, TestEngines.class)
+        assert resources.maybeCopy("shared")
         getEnginesToSetup().forEach {
-            assert resources.maybeCopy(TestEngines.BASIC_RESOURCE_BASED.name)
+            assert resources.maybeCopy(it.name)
         }
 
         // Switch to engine build directory for this setup
         GradleDistribution distribution = new UnderDevelopmentGradleDistribution(IntegrationTestBuildContext.INSTANCE)
         GradleExecuter engineBuilder = new GradleContextualExecuter(distribution, customTestDirectoryProvider, IntegrationTestBuildContext.INSTANCE)
-        File engineBuildDir = customTestDirectoryProvider.testDirectory.file(TestEngines.ENGINE_COPY_TO_DIR_NAME)
+        engineBuildDir = customTestDirectoryProvider.testDirectory.file(ENGINE_COPY_TO_DIR_NAME)
         engineBuilder.inDirectory(engineBuildDir)
             .withRepositoryMirrors()
             .withConsole(ConsoleOutput.Verbose)
@@ -57,7 +69,11 @@ trait TestEnginesFixture {
         engineBuilder.withTasks("build").run()
 
         // And make the built jar's path available
-        engineJarLibPath = engineBuildDir.file("build/libs/${TestEngines.ENGINE_COPY_TO_DIR_NAME}.jar").absolutePath
+        engineJarLibPath = engineBuildDir.file("build/libs/${ENGINE_COPY_TO_DIR_NAME}.jar").absolutePath
+    }
+
+    def cleanupSpec() {
+        //engineBuildDir.deleteDir()
     }
 
     String enableEngineForSuite() {
@@ -71,9 +87,8 @@ trait TestEnginesFixture {
     }
 
     enum TestEngines {
-        BASIC_RESOURCE_BASED("rbt-engine")
-
-        public static final String ENGINE_COPY_TO_DIR_NAME = "test-engine-build"
+        BASIC_RESOURCE_BASED("rbt-engine"),
+        RESOURCE_AND_CLASS_BASED("resource-and-class-engine")
 
         private final String name
 

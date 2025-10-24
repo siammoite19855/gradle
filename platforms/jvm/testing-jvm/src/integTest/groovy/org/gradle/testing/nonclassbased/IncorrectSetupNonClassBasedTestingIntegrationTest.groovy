@@ -24,7 +24,7 @@ import org.gradle.testing.fixture.TestNGCoverage
 /**
  * Tests that exercise and demonstrate incorrect Non-Class-Based Testing setups.
  */
-class NonClassBasedTestingIncorrectSetupIntegrationTest extends AbstractNonClassBasedTestingIntegrationTest {
+class IncorrectSetupNonClassBasedTestingIntegrationTest extends AbstractNonClassBasedTestingIntegrationTest {
     @Override
     List<TestEngines> getEnginesToSetup() {
         return [TestEngines.BASIC_RESOURCE_BASED]
@@ -319,5 +319,9 @@ class NonClassBasedTestingIncorrectSetupIntegrationTest extends AbstractNonClass
         testFrameworkName | testFrameworkMethod
         "Test NG"         | "useTestNG()"
         "JUnit"           | "useJUnit()"
+    }
+
+    private void classBasedTestsExecuted() {
+        outputContains("Tested!")
     }
 }

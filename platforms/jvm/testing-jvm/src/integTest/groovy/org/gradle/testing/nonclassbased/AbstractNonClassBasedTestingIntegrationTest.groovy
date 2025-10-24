@@ -24,19 +24,15 @@ abstract class AbstractNonClassBasedTestingIntegrationTest extends AbstractInteg
         failureCauseContains("There are test sources present and no filters are applied, but the test task did not discover any tests to execute. This is likely due to a misconfiguration. Please check your test configuration. If this is not a misconfiguration, this error can be disabled by setting the 'failOnNoDiscoveredTests' property to false.")
     }
 
-    protected void classBasedTestsExecuted() {
-        outputContains("Tested!")
-    }
-
     protected void testTaskWasSkippedDueToNoSources() {
         result.assertTaskSkipped(":test")
         outputContains("Skipping task ':test' as it has no source files and no previous output files.")
     }
 
     protected void nonClassBasedTestsExecuted() {
-        outputContains("INFO: Executing test: Test [file=SomeTestSpec.rbt, name=foo]")
-        outputContains("INFO: Executing test: Test [file=SomeTestSpec.rbt, name=bar]")
-        outputContains("INFO: Executing test: Test [file=subSomeOtherTestSpec.rbt, name=other]")
+        outputContains("INFO: Executing resource-based test: Test [file=SomeTestSpec.rbt, name=foo]")
+        outputContains("INFO: Executing resource-based test: Test [file=SomeTestSpec.rbt, name=bar]")
+        outputContains("INFO: Executing resource-based test: Test [file=subSomeOtherTestSpec.rbt, name=other]")
     }
 
     protected void writeTestClasses() {
