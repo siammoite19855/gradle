@@ -49,6 +49,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -162,6 +163,8 @@ public abstract class GenericHtmlTestReportGenerator implements TestReportGenera
                 }
             });
 
+            // Limit the number of concurrent operations to avoid excessive queue sizes
+            Semaphore maxOperationsLimiter = new Semaphore(128);
             htmlRenderer.render(model, new ReportRenderer<TestTreeModel, HtmlReportBuilder>() {
                 @Override
                 public void render(final TestTreeModel model, final HtmlReportBuilder output) {
@@ -172,13 +175,21 @@ public abstract class GenericHtmlTestReportGenerator implements TestReportGenera
 
                 private void queueTree(BuildOperationQueue<RunnableBuildOperation> queue, TestTreeModel tree, HtmlReportBuilder output) {
                     String filePath = getFilePath(tree.getPath(), tree.getChildren().isEmpty());
+                    try {
+                        maxOperationsLimiter.acquire();
+                    } catch (InterruptedException e) {
+                        // Re-interrupt the thread to ensure any cleanup code further up the stack is made aware of the interrupt.
+                        Thread.currentThread().interrupt();
+                        throw UncheckedException.throwAsUncheckedException(e);
+                    }
                     queue.add(new HtmlReportFileGenerator(
                         filePath,
                         tree,
                         output,
                         outputReaders,
                         rootDisplayNames,
-                        metadataRendererRegistry
+                        metadataRendererRegistry,
+                        maxOperationsLimiter
                     ));
                     for (String child : tree.getChildren().keySet()) {
                         queueTree(queue, tree.getChildren().get(child), output);
@@ -197,6 +208,7 @@ public abstract class GenericHtmlTestReportGenerator implements TestReportGenera
         private final List<OutputReader> outputReaders;
         private final List<String> rootDisplayNames;
         private final MetadataRendererRegistry metadataRendererRegistry;
+        private final Semaphore semaphore;
 
         HtmlReportFileGenerator(
             String fileUrl,
@@ -204,7 +216,8 @@ public abstract class GenericHtmlTestReportGenerator implements TestReportGenera
             HtmlReportBuilder output,
             List<OutputReader> outputReaders,
             List<String> rootDisplayNames,
-            MetadataRendererRegistry metadataRendererRegistry
+            MetadataRendererRegistry metadataRendererRegistry,
+            Semaphore semaphore
         ) {
             this.fileUrl = fileUrl;
             this.results = results;
@@ -212,6 +225,7 @@ public abstract class GenericHtmlTestReportGenerator implements TestReportGenera
             this.outputReaders = outputReaders;
             this.rootDisplayNames = rootDisplayNames;
             this.metadataRendererRegistry = metadataRendererRegistry;
+            this.semaphore = semaphore;
         }
 
         @Override
@@ -221,7 +235,11 @@ public abstract class GenericHtmlTestReportGenerator implements TestReportGenera
 
         @Override
         public void run(BuildOperationContext context) {
-            output.renderHtmlPage(fileUrl, results, new GenericPageRenderer(outputReaders, rootDisplayNames, metadataRendererRegistry));
+            try {
+                output.renderHtmlPage(fileUrl, results, new GenericPageRenderer(outputReaders, rootDisplayNames, metadataRendererRegistry));
+            } finally {
+                semaphore.release();
+            }
         }
     }
 
