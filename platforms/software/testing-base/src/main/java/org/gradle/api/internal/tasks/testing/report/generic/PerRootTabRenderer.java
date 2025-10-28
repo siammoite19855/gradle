@@ -241,7 +241,10 @@ public abstract class PerRootTabRenderer extends ReportRenderer<TestTreeModel, S
 
                     htmlWriter.startElement("td").attribute("class", statusClass);
                     htmlWriter.startElement("a")
-                        .attribute("href", GenericPageRenderer.getUrlTo(getCurrentModel().getPath(), child.getPath()))
+                        .attribute("href", GenericPageRenderer.getUrlTo(
+                            getCurrentModel().getPath(), false,
+                            child.getPath(), child.getChildren().isEmpty()
+                        ))
                         .characters(result.getDisplayName()).endElement();
                     htmlWriter.endElement();
 
