@@ -70,6 +70,7 @@ class ResilientGradleBuildSyncCrossVersionSpec extends ToolingApiSpecification {
 
         then:
         model.failures.toString().contains("Gradle exception boom !!!")
+        model.model.rootProject.buildTreePath == ":"
     }
 
     def "receive root project with broken root build file"() {
