@@ -58,7 +58,7 @@ public abstract class PerRootTabRenderer extends ReportRenderer<TestTreeModel, S
     @Override
     public void render(TestTreeModel model, SimpleHtmlWriter htmlWriter) throws IOException {
         this.currentModel = model;
-        TestTreeModel.PerRootInfo info = model.getPerRootInfo().get(rootIndex).get(perRootInfoIndex);
+        PerRootInfo info = model.getPerRootInfo().get(rootIndex).get(perRootInfoIndex);
         render(info, htmlWriter);
     }
 
@@ -69,7 +69,7 @@ public abstract class PerRootTabRenderer extends ReportRenderer<TestTreeModel, S
         return currentModel;
     }
 
-    protected abstract void render(TestTreeModel.PerRootInfo info, SimpleHtmlWriter htmlWriter) throws IOException;
+    protected abstract void render(PerRootInfo info, SimpleHtmlWriter htmlWriter) throws IOException;
 
     public static final class ForSummary extends PerRootTabRenderer {
         public ForSummary(int rootIndex, int perRootInfoIndex) {
@@ -77,7 +77,7 @@ public abstract class PerRootTabRenderer extends ReportRenderer<TestTreeModel, S
         }
 
         @Override
-        protected void render(TestTreeModel.PerRootInfo info, SimpleHtmlWriter htmlWriter) throws IOException {
+        protected void render(PerRootInfo info, SimpleHtmlWriter htmlWriter) throws IOException {
             htmlWriter.startElement("div");
             renderSummary(info, htmlWriter, info.getResult());
             if (info.getChildren().isEmpty()) {
@@ -88,7 +88,7 @@ public abstract class PerRootTabRenderer extends ReportRenderer<TestTreeModel, S
             htmlWriter.endElement();
         }
 
-        private static void renderSummary(TestTreeModel.PerRootInfo info, SimpleHtmlWriter htmlWriter, SerializableTestResult testResult) throws IOException {
+        private static void renderSummary(PerRootInfo info, SimpleHtmlWriter htmlWriter, SerializableTestResult testResult) throws IOException {
             htmlWriter.startElement("div").attribute("class", "summary");
             htmlWriter.startElement("table");
             htmlWriter.startElement("tr");
@@ -111,7 +111,7 @@ public abstract class PerRootTabRenderer extends ReportRenderer<TestTreeModel, S
             htmlWriter.endElement();
         }
 
-        private static void renderSummaryGroup(TestTreeModel.PerRootInfo info, SimpleHtmlWriter htmlWriter, SerializableTestResult testResult) throws IOException {
+        private static void renderSummaryGroup(PerRootInfo info, SimpleHtmlWriter htmlWriter, SerializableTestResult testResult) throws IOException {
             htmlWriter.startElement("div").attribute("class", "summaryGroup");
             htmlWriter.startElement("table");
             htmlWriter.startElement("tr");
@@ -153,7 +153,7 @@ public abstract class PerRootTabRenderer extends ReportRenderer<TestTreeModel, S
             return TimeFormatting.formatDurationVeryTerse(testResult.getDuration());
         }
 
-        private void renderLeafDetails(TestTreeModel.PerRootInfo info, SimpleHtmlWriter htmlWriter) throws IOException {
+        private void renderLeafDetails(PerRootInfo info, SimpleHtmlWriter htmlWriter) throws IOException {
             boolean isSuccess = info.getResult().getResultType() == TestResult.ResultType.SUCCESS;
             boolean hasFailures = !info.getResult().getFailures().isEmpty();
             boolean hasAssumptionFailure =  info.getResult().getAssumptionFailure() != null;
@@ -234,7 +234,7 @@ public abstract class PerRootTabRenderer extends ReportRenderer<TestTreeModel, S
                 .collect(Collectors.toList());
 
             for (TestTreeModel child : sortedByName) {
-                for (TestTreeModel.PerRootInfo perRootInfo : child.getPerRootInfo().get(rootIndex)) {
+                for (PerRootInfo perRootInfo : child.getPerRootInfo().get(rootIndex)) {
                     SerializableTestResult result = perRootInfo.getResult();
                     String statusClass = getStatusClass(result.getResultType());
                     htmlWriter.startElement("tr");
@@ -277,7 +277,7 @@ public abstract class PerRootTabRenderer extends ReportRenderer<TestTreeModel, S
             }
         }
 
-        private static String getFormattedSuccessRate(TestTreeModel.PerRootInfo info) {
+        private static String getFormattedSuccessRate(PerRootInfo info) {
             if (info.getTotalLeafCount() == 0) {
                 return "-";
             }
@@ -300,7 +300,7 @@ public abstract class PerRootTabRenderer extends ReportRenderer<TestTreeModel, S
         }
 
         @Override
-        protected void render(TestTreeModel.PerRootInfo info, SimpleHtmlWriter htmlWriter) throws IOException {
+        protected void render(PerRootInfo info, SimpleHtmlWriter htmlWriter) throws IOException {
             String outputId = "root-" + rootIndex + "-test-" + destination.name().toLowerCase(Locale.ROOT) + "-" + info.getResult().getName();
             htmlWriter.startElement("span").attribute("class", "code")
                 .startElement("pre")
@@ -325,13 +325,13 @@ public abstract class PerRootTabRenderer extends ReportRenderer<TestTreeModel, S
         }
 
         @Override
-        protected void render(TestTreeModel.PerRootInfo info, SimpleHtmlWriter htmlWriter) throws IOException {
+        protected void render(PerRootInfo info, SimpleHtmlWriter htmlWriter) throws IOException {
             htmlWriter.startElement("div").attribute("class", "metadata");
                 renderMetadataTable(info, htmlWriter);
             htmlWriter.endElement();
         }
 
-        private void renderMetadataTable(TestTreeModel.PerRootInfo info, SimpleHtmlWriter htmlWriter) throws IOException {
+        private void renderMetadataTable(PerRootInfo info, SimpleHtmlWriter htmlWriter) throws IOException {
             htmlWriter.startElement("table");
                 renderMetadataTableHeader(htmlWriter);
                 renderMetadataTableBody(info.getMetadatas(), htmlWriter);
